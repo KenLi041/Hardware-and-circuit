@@ -1,0 +1,407 @@
+# This program manipulates an array by inserting and deleting at specified index and sorting the contents of the array.
+# The program should also be able to print the current content of the array.
+# The program should not terminate unless the 'quit' subroutine is called
+# You can add more subroutines and variables as you wish.
+# Remember to use the stack when calling subroutines.
+# You can change the values and length of the beginarray as you wish for testing.
+# You will submit 5 .asm files for this quesion, Q1a.asm, Q1b.asm, Q1c.asm, Q1d.asm and Q1e.asm.
+# Each file will be implementing the functionalities specified in the assignment.
+# Use this file to build the helper functions that you will need for the rest of the question.
+
+
+.data
+
+beginarray: .word 9, 8, 7, 6, 5, -999, 0, 0 #test if it stops at -999
+#2, 3, 77, 5, -999			#’beginarray' with some contents	 DO NOT CHANGE THE NAME "beginarray"
+.align 2
+array: .space 4000					#allocated space for ‘array'
+array2: .space 4000
+array3: .space 4000
+str_command:	.asciiz "Enter a command (i, d, s or q): " # command to execute
+test: .asciiz "test"
+str_index: .asciiz "\nEnter index: "
+str_value: .asciiz "Enter value: "
+str_invalid: .asciiz "Invalid index."
+str_current: .asciiz "The current array is "
+wrong_command: .asciiz "\nwrong command"
+str_newline: "\n"
+str_space: " "
+str_d: "d"
+str_s: "s"
+str_q: "q"
+buffer: .space 20
+
+	.text
+	.globl main
+
+#i 105 	d 100	s 115 	q 113
+main:
+	# main code comes here
+	li $v0,0
+	la $s2, beginarray #input beginarray
+	la $s3, array #pointer for second array
+	#li $t2, 0 #set counter
+	li $s1, -999 #set end of array
+	jal length
+	jal copyarray
+	jal printarray
+	
+continue:
+	la $a0, str_command #print output string
+	li $v0, 4 #call print
+	syscall
+	li $v0, 12 #read user input 12 is string
+	syscall
+	add $s0,$v0,$zero #save input into $s0	
+	#lb $s1, 0($s0) #load value from address!
+	xor $v0, $v0, $v0 #?
+	#jal copyarray
+	#jal printarray
+	beq $s0, 105, insert #if i, insert
+	beq $s0, 100, delete
+	beq $s0, 115, sort
+	beq $s0, 113, exit
+	
+	la $a0, wrong_command #print output string
+	li $v0, 4 #call print
+	syscall
+	j exit
+	
+	
+	
+	
+	
+	li $v0,1 #print value
+	move $a0, $t4
+	syscall
+	
+	
+exit:	li $v0, 10
+	syscall
+	
+sort:
+	
+	la $t6, array
+	move $t8, $t0
+	#li $v0,1 #print LENGTH value TEST!
+	#move $a0, $t8
+	#syscall
+	move $t7, $zero
+	move $t9,$zero
+
+loop1:
+	move $t9,$zero
+
+loop2:
+	move $t0,$t9      # get the length to t9
+    	mul $t0,$t0,4
+    	addu $t1,$t0,$t6 #go to end position?
+    	lw $t2,0($t1)
+    	
+    	addi $t0,$t9,1    # get a[i+1]
+    	mul $t0,$t0,4
+    	addu $t4,$t0,$t6
+    	lw $t3,0($t4)
+
+    	ble $t2,$t3,skip  # if > WARNING see result if descending change it! bge?
+    	sw $t3,0($t1)   # or swap
+    	sw $t2,0($t4) 
+	
+skip:
+   addi $t9,$t9,1   # if it satisfies condition
+   addi $t0,$t9,1   # if yes go loop2
+   sub $t1,$t8,$t7    # 
+   blt $t0,$t1,loop2  # if yes go loop1
+   addi $t7,$t7,1     # 
+   sub $t2,$t8,1
+   blt $t7,$t2,loop1
+	
+output:
+   la $a0,str_newline   #print output string
+   li $v0,4
+   syscall
+   la $a0,str_current   #print output string
+   li $v0,4
+   syscall
+
+   move $t7,$zero
+   
+printsort: 
+	move $t0,$t7
+   mul $t0,$t0,4
+   addu $t1,$t0,$t6
+   lw $a0,0($t1)
+   li $v0,1
+   syscall
+
+   la $a0,str_space  # add space
+   li $v0,4
+   syscall
+
+   addi $t7,$t7,1
+   blt $t7,$t8,printsort
+
+
+
+stopper:
+	j exit
+
+
+length: 
+	beq $t2, $s1, printlength #CHANGED FROM PRINTLENGTH TO COPY ARRAY!
+	#bge $t0, 5, exit  #temporary, if got 4th element exit
+	lw $t2, 0($s2) # load word from addrs, plug future condition here!
+	addi $s2,$s2,4 # move pointer to next cell 
+	
+	#li $v0,1 #print value
+	#move $a0, $t0
+	#syscall
+	
+	#li $v0, 4 #call print
+	#la $a0, test #print output string
+	#syscall
+	
+	addi $t0, $t0, 1 #+counter
+	addi $t4, $t0, 0 #move to another variable?
+	j length
+	
+printlength:
+	sub $t0, $t0, 1
+	#li $v0,1 #print value
+	#move $a0, $t0
+	#syscall
+	
+	la $s2, beginarray #input beginarray
+	la $s3, array #pointer for second array
+	
+	j copyarray
+	
+	
+copyarray:
+	#s2 beginarray s3 array!
+	#if beq here special
+	lw $t4, 0($s2) #t4 is the value from t1 pointer
+	addi $s2, $s2, 4
+	#li $v0,1 #print value for test
+	#move $a0, $t4 #WARNING print fetched value for CHECK
+	#syscall
+	
+	sw $t4, 0($s3)
+	addi $s3, $s3, 4
+	
+	lw $t5, 0($s3) #t5 is array content read from t3 array pointer
+	
+	#li $v0,1 #print STORED value for test
+	#move $a0, $t5 #WARNING print fetched value for CHECK
+	#syscall
+	
+	
+	
+	beq $t4, $s1, setarray#if beq here no special 
+	
+	j copyarray
+
+	#j exit
+	#j exit
+setarray:
+	la $s3, array
+	j printarray
+
+printarray: #remember to count the initial array in!
+	#test ENTER PRINTARRAY OR NOT
+	
+	lw $t6, 0($s3) # get from t3!
+	beq $t6, $s1, continue
+	addi $s3,$s3,4 # move pointer to next cell 
+	
+	#JUST FOR CHECK!
+	#li $v0,1 #print STORED value for test
+	#move $a0, $t6 #WARNING print fetched value for CHECK
+	#syscall
+	
+	#la $a0, str_space #print output string
+	#li $v0, 4 #call print
+	#syscall
+	
+	j printarray
+
+
+
+# You will repeat the steps below for each of the .asm files. Q1b.asm is shown below
+
+# For Q1b.asm, you will need to implement the insert operation
+# str_index: .asciiz "Enter index: "
+# str_value: .asciiz "Enter value: "
+
+# insert:
+# INSERT subroutine expects index of and value to insert
+insert:
+	la $a0, str_index #print output string
+	li $v0, 4 #call print
+	syscall
+
+	
+	li $v0, 5 #read index number
+	syscall
+	move $s7, $v0
+	#add $s2,$v0,$zero #store index in s2
+	
+	#li $v0,1 #print value
+	#move $a0, $s7 #WARNING print INDEX s2 for CHECK
+	#syscall
+	
+	
+	ble $t0, $s7, invalid #if invalid index
+	#ENTER VALUE!
+	la $a0, str_value #print output string
+	li $v0, 4 #call print
+	syscall
+	
+	li $v0, 5 #read index number
+	syscall
+	move $s3, $v0
+	
+	#li $v0,1 #print value for test
+	#move $a0, $s3 #WARNING print VALUE s3 for CHECK
+	#syscall
+	
+
+	la $a3, array # WARNING put address of array into $a3
+	#li $a2, $s2 #put index s2 into a2
+	#get address of the last position, 4*length + start pointer address, then lw sw then array point stays, write to next place: address +4, then address -4, length-index=loop time, then go to sw insert the value
+	#addi $t0, $t0, -1	# length or length - 1?
+	li $t6, 4 #just storing value
+	mul $t7, $t0, $t6 #store in t7 result of 4*length or length -1????
+	
+	add $a3, $a3, $t7 #since in main a3 is array, then address go to last element
+	
+	li $s4, 0 #set COUNTER S4 =0 WARNING!!!
+	
+	sub $s5, $t0, $s7 #s5 = length-1 - index number
+	
+loopmove:
+	#condition to insertelement!
+	bgt $s4, $s5, insertelement #it prints 22 11 why twice?
+	
+	lw  $s6, 0($a3) # get last element value s6 from array address a3 at last element!
+	
+	
+	sw $s6, 4($a3)    #put value in but array pointer stays the same!
+	
+	
+	addi $a3, $a3, -4	# array pointer -8
+	addi $s4, $s4, 1	#counter +1
+	
+	
+	j loopmove
+
+	
+insertelement: #move after & insert element!
+	sw $s3, 4($a3) #directly load the value
+	
+	li $a2, 0 	#set another counter for printnewarray use
+
+	
+	la $a3, array
+	
+	la $a0, str_current #print output string
+	li $v0, 4 #call print
+	syscall
+	
+	j printnewarray #go to printnewarray!
+	
+printnewarray:
+	
+	
+	lw $t6, 0($a3) # get from a3!
+	addi $a3,$a3,4 # a3 replace t3
+	bgt $a2, $t0, exit #or t6 s1?
+	
+	
+	
+	addi $a2, $a2, 1	#use another counter or counter+1 = length?
+	
+	li $v0,1 #print value for test
+	move $a0, $t6 #WARNING print LAST ELEMENT VALUE s6 for CHECK
+	syscall
+	la $a0, str_space #print output string
+	li $v0, 4 #call print
+	syscall
+	
+	#j exit
+	j printnewarray
+
+invalid:
+	la $a0, str_invalid #print output string
+	li $v0, 4 #call print
+	syscall
+	j insert
+	
+invalid_d:
+	la $a0, str_invalid #print output string
+	li $v0, 4 #call print
+	syscall
+	j delete
+	
+delete: 
+	la $a0, str_index #print output string
+	li $v0, 4 #call print
+	syscall
+	
+	li $v0, 5 #read index number
+	syscall
+	move $s7, $v0
+	
+	
+	ble $t0, $s7, invalid_d #if invalid index
+	
+	la $a3, beginarray # WARNING put address of array into $a3
+	li $t7, 4 #just storing value
+	mul $t7, $s7, $t7 #store in t7 result of 4*index
+	
+	add $a3, $a3, $t7 #since in main a3 is array, then address go to the index place
+	
+	#li $s4, 0 #set COUNTER S4 =0 WARNING!!!
+	
+loopmove_d:
+	
+	lw  $s6, 4($a3) #get the index+1 position's value, pointer stays!
+	beq $s1, $s6, printdelete #if -999 stop
+	sw $s6, 0($a3) #cover previous digit
+	
+	#WARNING! Need change
+	addi $a3, $a3, 4	# array pointer -8
+	#addi $s4, $s4, 1	#counter +1
+	
+	j loopmove_d
+	
+printdelete:
+	sw $s6, 0($a3)
+	
+	la $a3, beginarray
+	la $a0, str_current #print output string
+	li $v0, 4 #call print
+	syscall
+	
+	j printnewarray_d
+	
+printnewarray_d:
+	
+	
+	lw $t6, 0($a3) # get from a3!
+	addi $a3,$a3,4 # a3 replace t3
+	beq $t6, $s1, exit #or t6 s1?
+	
+	
+	#addi $a2, $a2, 1	#use another counter or counter+1 = length?
+	
+	li $v0,1 #print value for test
+	move $a0, $t6 #WARNING print LAST ELEMENT VALUE s6 for CHECK
+	syscall
+	la $a0, str_space #print output string
+	li $v0, 4 #call print
+	syscall
+	
+	#j exit
+	j printnewarray_d
+	
