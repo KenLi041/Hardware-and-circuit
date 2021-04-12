@@ -1,4 +1,3 @@
-# Ken Li 260823059	COMP 273 assignment 2 Q3
 
 # This program calculates the slope and midpoint between two points in a plane
 
